@@ -10,7 +10,6 @@ process Align {
         val ref
     
     output:
-        tuple val(meta), path("${meta.id}/bam/${meta.id}.unaligned.bam")
         tuple val(meta), path('*Log.final.out'), emit: log_final
         tuple val(meta), path('*Log.out'), emit: log_out
         tuple val(meta), path('*Log.progress.out'), emit: log_progress
@@ -31,12 +30,13 @@ process Align {
 
     script:
         def rg_string = [
-            meta.flowcell_id ? "-RG ${meta.flowcell_id}" : null,
-            meta.id ? "-SM ${meta.id}" : null,
-            meta.platform ? "-PL ${meta.platform}" : null,
-            meta.library ? "-LB ${meta.library}" : null,
-            meta.center ? "-CN ${meta.center}" : null,
+            meta.flowcell_id ? "RG:${meta.flowcell_id}" : null,
+            meta.id ? "SM:${meta.id}" : null,
+            meta.platform ? "PL:${meta.platform}" : null,
+            meta.library ? "LB:${meta.library}" : null,
+            meta.center ? "CN:${meta.center}" : null,
         ].findAll { it }.join(" ")
+        
         def args = meta.args.containsKey(task.process) ? meta.args[task.process].trim() : ""
         def read_command = trimmed_reads[0].toString().endsWith('.gz') ? '--readFilesCommand zcat -' : ""
         """
@@ -46,8 +46,9 @@ process Align {
             --genomeDir ${ref.genome_dir} \\
             --outFileNamePrefix ${meta.id}/onepass/${meta.id}. \\
             --outSAMtype BAM SortedByCoordinate \\
+            --outSAMattrRGline ${rg_string} \\
             --readFilesIn ${trimmed_reads[0]} ${trimmed_reads[1]} \\
-            ${read_command} \\
+            ${read_command}
         """
 }
 
