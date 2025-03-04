@@ -1,0 +1,114 @@
+digraph "WTS" {
+v0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromFilePairs"];
+v1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v0 -> v1;
+
+v1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v2 [label="ExtractInfoFromFastq"];
+v1 -> v2 [label="ch_fastq"];
+
+v2 [label="ExtractInfoFromFastq"];
+v3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v2 -> v3;
+
+v3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v4 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v3 -> v4 [label="ch_fastq"];
+
+v4 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v4 -> v5 [label="ch_fastq"];
+
+v5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v5 -> v6 [label="ch_fastq"];
+
+v6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v7 [label="Fastp"];
+v6 -> v7 [label="ch_fastq"];
+
+v7 [label="Fastp"];
+v12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v7 -> v12;
+
+v7 [label="Fastp"];
+v11 [shape=point];
+v7 -> v11;
+
+v7 [label="Fastp"];
+v10 [shape=point];
+v7 -> v10;
+
+v7 [label="Fastp"];
+v9 [shape=point];
+v7 -> v9;
+
+v7 [label="Fastp"];
+v8 [shape=point];
+v7 -> v8;
+
+v12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v13 [label="STAR_OnePass"];
+v12 -> v13 [label="ch_trimmed"];
+
+v13 [label="STAR_OnePass"];
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v13 -> v14;
+
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v16 [label="STAR_GenomeGenerate"];
+v14 -> v16 [label="ch_onepass"];
+
+v15 [shape=point,label="",fixedsize=true,width=0.1];
+v16 [label="STAR_GenomeGenerate"];
+v15 -> v16;
+
+v16 [label="STAR_GenomeGenerate"];
+v17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v16 -> v17;
+
+v12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v12 -> v17 [label="ch_trimmed"];
+
+v17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="filter"];
+v17 -> v18;
+
+v18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="filter"];
+v19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v18 -> v19;
+
+v19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v20 [label="STAR_TwoPass_withinbam"];
+v19 -> v20 [label="ch_twopass_input"];
+
+v20 [label="STAR_TwoPass_withinbam"];
+v24 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v20 -> v24;
+
+v19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v21 [label="STAR_TwoPass_chimeric"];
+v19 -> v21 [label="ch_twopass_input"];
+
+v21 [label="STAR_TwoPass_chimeric"];
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+v21 -> v22;
+
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+v23 [shape=point];
+v22 -> v23;
+
+v24 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v25 [label="RSEM_CalculateExpression"];
+v24 -> v25 [label="ch_rsem"];
+
+v25 [label="RSEM_CalculateExpression"];
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+v25 -> v26;
+
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+v27 [shape=point];
+v26 -> v27;
+
+}

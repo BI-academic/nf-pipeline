@@ -3,10 +3,14 @@ nextflow.enable.dsl=2
 
 include { ExtractInfoFromFastq } from '../../modules/utils'
 
+include { Fastp } from '../../modules/fastp'
 include {
-    Align as OnePass
-    Align as TwoPass
+    STAR_OnePass
+    STAR_TwoPass_withinbam
+    STAR_TwoPass_chimeric
+    STAR_GenomeGenerate
 } from '../../modules/star'
+include { RSEM_CalculateExpression } from '../../modules/rsem'
 
 
 // Set Workflow
@@ -15,7 +19,7 @@ workflow {
     ch_ref = Channel.value(
         [
             fasta: "${params.ref_dir}/${params.ref_ver}/fasta/Homo_sapiens_assembly38.fasta",
-            gtf: "${params.ref_dir}/${params.ref_ver}/gtf/gencode.v46.basic.annotation.gtf"
+            gtf: "${params.ref_dir}/${params.ref_ver}/gtf/gencode.v46.basic.annotation.gtf",
         ]
     )
 
@@ -61,11 +65,94 @@ workflow {
             meta.platform = params.platform
             meta.library = params.library
             meta.center = params.center
-            // add UMI informations
-            meta.umi_str = params.umi_str
             [ meta, reads ]
         }
 
+    // Set module parameters.
+    ch_fastq = ch_fastq
+        | map { meta, reads ->
+            // Add process arguments
+            meta.args = [
+                Fastp: """
+                    --trim_poly_g \\
+                    --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \\
+                    --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+                """,
+                // STAR
+                STAR_OnePass: """
+                    --outSAMtype BAM SortedByCoordinate \\
+                """,
+                STAR_GenomeGenerate: "",
+                STAR_TwoPass_withinbam: """
+                    --chimOutType WithinBAM \\
+                    --outSAMtype BAM SortedByCoordinate \\
+                    --quantMode TranscriptomeSAM \\
+                """,
+                STAR_TwoPass_chimeric: """
+                    --chimOutType Junctions \\
+                    --outSAMtype BAM SortedByCoordinate \\
+                """,
+                // RSEM
+                RSEM_CalculateExpression: """
+                    --alignments \\
+                    --paired-end \\
+                    --strandedness reverse \\
+                """
+            ]
+            [ meta, reads ]
+        }
+
+    // Set output directory
+    ch_fastq = ch_fastq
+        | map { meta, reads ->
+            // Add output dir
+            meta.output_dir = "${meta.id}/fastq"
+            [ meta, reads ]
+        }
+    
+    // Trimming first.
+    ch_trimmed = ch_fastq | Fastp
+
+    // Set STAR onepass output path
+    ch_trimmed = ch_trimmed.trimmed_reads
+        | map { meta, reads ->
+            // Add output dir
+            def genome_dir = "${params.ref_dir}/${params.ref_ver}/star"
+            [ meta, reads, genome_dir ]
+        }
+    // Run Onepass
+    ch_onepass = ch_trimmed | STAR_OnePass
+    
+    // Genome Generate
+    ch_onepass = ch_onepass
+        | map { meta, sj_out, bam, log_final, log, log_progress ->
+            // replace genome dir to sample_specific
+            def genome_dir = "${meta.id}/genome"
+            [ meta, sj_out, genome_dir ]
+        }
+
+    ch_genome = ch_ref.combine(ch_onepass) | STAR_GenomeGenerate()
+
+    // Combine output
+    ch_twopass_input = ch_trimmed.combine(ch_genome)
+        .filter { meta1, reads, meta2, genome_dir -> 
+            meta1.id == meta2.id
+        }
+        .map { meta1, reads, meta2, genome_dir -> 
+            [meta1, reads, genome_dir]
+        }
+
+    ch_twopass_withinbam = ch_twopass_input | STAR_TwoPass_withinbam
+    ch_twopass_chimeric = ch_twopass_input | STAR_TwoPass_chimeric
+    ch_twopass_chimeric.view()
+
+    ch_rsem = ch_twopass_withinbam
+        | map { meta, transcript_bam, align_bam, sj_out, log_final, log, log_progress ->
+            def rsem_ref = "${params.ref_dir}/${params.ref_ver}/rsem/gencode_v47"
+            [meta, transcript_bam, rsem_ref]
+        }
+    ch_rsem = ch_rsem | RSEM_CalculateExpression
+    ch_rsem.view()
 }
 
 
