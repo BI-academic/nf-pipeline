@@ -11,7 +11,7 @@ process STAR_OnePass {
     output:
         tuple (
             val(meta), 
-            path('*.SJ.out.tab'), 
+            path("${meta.id}/onepass/${meta.id}.SJ.out.tab"),
             path("${meta.id}/onepass/${meta.id}.Aligned.sortedByCoord.out.bam"), 
             path("${meta.id}/onepass/${meta.id}.Log.final.out"), 
             path("${meta.id}/onepass/${meta.id}.Log.out"), 
@@ -51,7 +51,26 @@ process STAR_GenomeGenerate {
         tuple path(fasta), path(gtf), val(meta), path(sjdb_path), path(genome_dir)
 
     output:
-        tuple val(meta), path(genome_dir)
+        tuple (
+            val(meta), 
+            path(genome_dir),
+            path("${genome_dir}/Genome"),
+            path("${genome_dir}/Log.out"),
+            path("${genome_dir}/SA"),
+            path("${genome_dir}/SAindex"),
+            path("${genome_dir}/chrLength.txt"),
+            path("${genome_dir}/chrName.txt"),
+            path("${genome_dir}/chrNameLength.txt"),
+            path("${genome_dir}/chrStart.txt"),
+            path("${genome_dir}/exonGeTrInfo.tab"),
+            path("${genome_dir}/exonInfo.tab"),
+            path("${genome_dir}/geneInfo.tab"),
+            path("${genome_dir}/genomeParameters.txt"),
+            path("${genome_dir}/sjdbInfo.txt"),
+            path("${genome_dir}/sjdbList.fromGTF.out.tab"),
+            path("${genome_dir}/sjdbList.out.tab"),
+            path("${genome_dir}/transcriptInfo.tab"),
+        )
     
     script:
         def overhang = meta.read_len - 1
