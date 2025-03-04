@@ -45,11 +45,10 @@ process STAR_OnePass {
 process STAR_GenomeGenerate {
 
     label 'high'
-    tag 'Reference'
+    tag 'Preprocessing'
     
     input: 
-        tuple path(fasta), path(gtf)
-        tuple val(meta), path(sjdb_path), path(genome_dir)
+        tuple path(fasta), path(gtf), val(meta), path(sjdb_path), path(genome_dir)
 
     output:
         tuple val(meta), path(genome_dir)
@@ -75,7 +74,7 @@ process STAR_GenomeGenerate {
 process STAR_TwoPass_withinbam {
 
     label 'high'
-    tag 'Preprocessing'
+    tag 'Processing'
     
     input: 
         tuple val(meta), path(trimmed_reads), path(genome_dir)
@@ -118,7 +117,7 @@ process STAR_TwoPass_withinbam {
 process STAR_TwoPass_chimeric {
 
     label 'high'
-    tag 'Preprocessing'
+    tag 'Processing'
     
     input: 
         tuple val(meta), path(trimmed_reads), path(genome_dir)

@@ -18,8 +18,8 @@ workflow {
     // Define reference channels
     ch_ref = Channel.value(
         [
-            fasta: "${params.ref_dir}/${params.ref_ver}/fasta/Homo_sapiens_assembly38.fasta",
-            gtf: "${params.ref_dir}/${params.ref_ver}/gtf/gencode.v46.basic.annotation.gtf",
+            fasta: "${params.ref_dir}/${params.ref_ver}/Homo_sapiens_assembly38.basic.fasta",
+            gtf: "${params.ref_dir}/${params.ref_ver}/gencode.v46.basic.annotation.gtf",
         ]
     )
 
@@ -62,6 +62,7 @@ workflow {
             // Add other meta information
             meta.save_failed_trim = params.save_failed_trim
             meta.ref_ver = params.ref_ver
+            meta.ref_dir = params.ref_dir
             meta.platform = params.platform
             meta.library = params.library
             meta.center = params.center
@@ -80,23 +81,23 @@ workflow {
                 """,
                 // STAR
                 STAR_OnePass: """
-                    --outSAMtype BAM SortedByCoordinate \\
+                    --outSAMtype BAM SortedByCoordinate
                 """,
                 STAR_GenomeGenerate: "",
                 STAR_TwoPass_withinbam: """
                     --chimOutType WithinBAM \\
                     --outSAMtype BAM SortedByCoordinate \\
-                    --quantMode TranscriptomeSAM \\
+                    --quantMode TranscriptomeSAM
                 """,
                 STAR_TwoPass_chimeric: """
                     --chimOutType Junctions \\
-                    --outSAMtype BAM SortedByCoordinate \\
+                    --outSAMtype BAM SortedByCoordinate
                 """,
                 // RSEM
                 RSEM_CalculateExpression: """
                     --alignments \\
                     --paired-end \\
-                    --strandedness reverse \\
+                    --strandedness reverse
                 """
             ]
             [ meta, reads ]
@@ -106,7 +107,7 @@ workflow {
     ch_fastq = ch_fastq
         | map { meta, reads ->
             // Add output dir
-            meta.output_dir = "${meta.id}/fastq"
+            meta.output_dir = "${meta.id}"
             [ meta, reads ]
         }
     
@@ -117,7 +118,7 @@ workflow {
     ch_trimmed = ch_trimmed.trimmed_reads
         | map { meta, reads ->
             // Add output dir
-            def genome_dir = "${params.ref_dir}/${params.ref_ver}/star"
+            def genome_dir = "${meta.ref_dir}/${meta.ref_ver}/star"
             [ meta, reads, genome_dir ]
         }
     // Run Onepass
@@ -131,7 +132,7 @@ workflow {
             [ meta, sj_out, genome_dir ]
         }
 
-    ch_genome = ch_ref.combine(ch_onepass) | STAR_GenomeGenerate()
+    ch_genome = ch_ref.combine(ch_onepass) | STAR_GenomeGenerate
 
     // Combine output
     ch_twopass_input = ch_trimmed.combine(ch_genome)

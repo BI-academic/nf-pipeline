@@ -2,7 +2,7 @@
 process RSEM_CalculateExpression {
 
     label 'high'
-    tag 'Preprocessing'
+    tag 'Processing'
     
     input: 
         tuple val(meta), path(transcript_bam), path(rsem_ref)
