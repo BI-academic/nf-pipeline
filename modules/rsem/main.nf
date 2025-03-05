@@ -19,11 +19,13 @@ process RSEM_CalculateExpression {
     script:        
         def args = meta.args.containsKey(task.process) ? meta.args[task.process].trim() : ""
         """
+            mkdir -p ${meta.id}/rsem
+
             rsem-calculate-expression \\
             -p ${task.cpus} \\
             ${args} \\
             ${transcript_bam} \\
-            ${rsem_ref} \\
+            ${rsem_ref}/gencode_${meta.gtf_ver} \\
             ${meta.id}/rsem/${meta.id}
         """
 }

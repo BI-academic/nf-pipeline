@@ -19,7 +19,7 @@ workflow {
     ch_ref = Channel.value(
         [
             fasta: "${params.ref_dir}/${params.ref_ver}/Homo_sapiens_assembly38.basic.fasta",
-            gtf: "${params.ref_dir}/${params.ref_ver}/gencode.v46.basic.annotation.gtf",
+            gtf: "${params.ref_dir}/${params.ref_ver}/gencode.v47.basic.annotation.gtf",
         ]
     )
 
@@ -44,7 +44,7 @@ workflow {
         ch_fastq = ch_fastq | map { meta, reads -> 
                 // Directly assign params.flowcell_id when it's provided
                 meta.flowcell_id = params.flowcell_id
-                meta.read_len = params.flowcell_id // Default value when ExtractInfoFromFastq is skipped
+                meta.read_len = params.read_len // Default value when ExtractInfoFromFastq is skipped
                 [ meta, reads ]
             }
     } else {
@@ -62,6 +62,7 @@ workflow {
             // Add other meta information
             meta.save_failed_trim = params.save_failed_trim
             meta.ref_ver = params.ref_ver
+            meta.gtf_ver = params.gtf_ver
             meta.ref_dir = params.ref_dir
             meta.platform = params.platform
             meta.library = params.library
@@ -128,18 +129,17 @@ workflow {
     ch_onepass = ch_onepass
         | map { meta, sj_out, bam, log_final, log, log_progress ->
             // replace genome dir to sample_specific
-            def genome_dir = "${meta.id}/genome"
-            [ meta, sj_out, genome_dir ]
+            [ meta, sj_out,]
         }
 
     ch_genome = ch_ref.combine(ch_onepass) | STAR_GenomeGenerate
-
+    // ch_genome.view()
     // Combine output
     ch_twopass_input = ch_trimmed.combine(ch_genome)
-        .filter { meta1, reads, meta2, genome_dir -> 
+        .filter { meta1, reads, ref_genome, meta2, genome_dir -> 
             meta1.id == meta2.id
         }
-        .map { meta1, reads, meta2, genome_dir -> 
+        .map { meta1, reads, ref_genome, meta2, genome_dir -> 
             [meta1, reads, genome_dir]
         }
 
@@ -149,7 +149,7 @@ workflow {
 
     ch_rsem = ch_twopass_withinbam
         | map { meta, transcript_bam, align_bam, sj_out, log_final, log, log_progress ->
-            def rsem_ref = "${params.ref_dir}/${params.ref_ver}/rsem/gencode_v47"
+            def rsem_ref = "${params.ref_dir}/${params.ref_ver}/rsem"
             [meta, transcript_bam, rsem_ref]
         }
     ch_rsem = ch_rsem | RSEM_CalculateExpression
